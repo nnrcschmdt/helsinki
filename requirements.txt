@@ -4,3 +4,4 @@ Pillow==3.3.0
 PyYAML==3.11
 django-tinymce==2.6.1
 python-dateutil==2.5.3
+sqlparse==0.3.1
