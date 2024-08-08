@@ -94,7 +94,7 @@ INSTALLED_APPS = (
 )
 
 TINYMCE_DEFAULT_CONFIG = {
-    'plugins': 'advimage,advlink,advlist,autoresize,contextmenu,paste',
+    'plugins': 'advlink,advlist,autoresize,paste',
     'theme': 'advanced',
     'theme_advanced_toolbar_location': 'top',
     'theme_advanced_toolbar_align': 'center',
