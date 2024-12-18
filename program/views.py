@@ -1,8 +1,10 @@
 import json
 from datetime import date, datetime, time, timedelta
+from itertools import chain
 
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db.models import Q
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.generic.base import TemplateView
 from django.views.generic.detail import DetailView
@@ -356,3 +358,79 @@ def json_timeslots_specials(request):
 
     return HttpResponse(json.dumps(specials, ensure_ascii=False, encoding='utf8').encode('utf8'),
                         content_type="application/json; charset=utf-8")
+
+
+def search(request):
+    q = request.GET.get("q")
+    page = request.GET.get("page")
+    types = request.GET.get("types").split(",") if "types" in request.GET else None
+
+    if q is None:
+        return HttpResponse("query parameter 'q' is required", status=400)
+
+    if types is None or "host" in types:
+        hosts = list(
+            Host.objects.filter(name__icontains=q).values(
+                "id",
+                "name",
+            )
+        )
+    else:
+        hosts = []
+
+    if types is None or "note" in types:
+        notes = list(
+            Note.objects.filter(title__icontains=q)
+            .select_related("show", "timeslot")
+            .values(
+                "content",
+                "image",
+                "show__image",
+                "show__name",
+                "show__slug",
+                "start",
+                "timeslot",
+                "title",
+            )
+        )
+    else:
+        notes = []
+
+    if types is None or "show" in types:
+        shows = list(
+            Show.objects.filter(name__icontains=q).values(
+                "description",
+                "image",
+                "name",
+                "short_description",
+                "slug",
+            )
+        )
+    else:
+        shows = []
+
+    # FIXME: this is a very ugly way to "annotate" the results with their type
+    for host in hosts:
+        host["type"] = "host"
+    for note in notes:
+        note["type"] = "note"
+    for show in shows:
+        show["type"] = "show"
+
+    paginator = Paginator(list(chain(hosts, notes, shows)), per_page=10)
+
+    try:
+        page = paginator.page(page)
+    except PageNotAnInteger:
+        page = paginator.page(1)
+    except EmptyPage:
+        page = paginator.page(paginator.num_pages)
+
+    return JsonResponse(
+        {
+            "count": paginator.count,
+            "page": page.number,
+            "pages": paginator.num_pages,
+            "results": list(page.object_list),
+        }
+    )

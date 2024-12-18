@@ -28,6 +28,8 @@ urlpatterns = patterns('',
                        url(r'^v2/shows/(?P<slug>[\w-]+)/?$', views.ShowDetailViewV2.as_view()),
                        url(r'^v2/(?P<pk>\d+)/?$', views.TimeSlotDetailViewV2.as_view()),
                        url(r'^v2/show-filters/?$', views.ShowFilterListViewV2.as_view()),
+                       # search view for WordPress 2025
+                       url(r'^v3/search/?$', views.search)
                        )
 if settings.DEBUG:
     urlpatterns += \
